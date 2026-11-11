@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits for the running one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # The server pins this key to `rrsync /var/www/artiroof`, so the
+      # destination path is relative to the web root.
+      - name: Sync site to server
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          rsync -rlptvz --delete --checksum \
+            --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            --exclude .git/ --exclude .github/ --exclude README --exclude test/ --exclude .DS_Store \
+            --exclude .env --exclude SERVER.md \
+            ./ "deploy@${DEPLOY_HOST}:"
+
+      - name: Smoke test
+        run: |
+          for path in / /contact/index.html /zinc.html; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://www.artiroof.co.uk${path}")
+            echo "${code} ${path}"
+            [ "$code" = 200 ]
+          done
