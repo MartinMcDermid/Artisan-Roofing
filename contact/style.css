@@ -40,3 +40,8 @@ label {
 	padding-top: 5px;
 	font-size: 1.4em;
 }
+.form-note {
+	clear: both;
+	margin: 0 0 10px 10px;
+	font-size: 1.1em;
+}

@@ -40,9 +40,10 @@
 	
 	<div id="bottom_menu">		
 			<li><a href="../index.html">Home</a></li>
-			<li><a href="../zinc.html">Terms</a></li>
-			<li><a href="../copper.html">Documents</a></li>
-			<li><a href="../copper.html">Learn</a></li>
+			<li><a href="../terms.html">Terms</a></li>
+			<li><a href="../privacy.html">Privacy</a></li>
+			<li><a href="../documents.html">Documents</a></li>
+			<li><a href="../learn.html">Learn</a></li>
 			<li><a href="../contact/index.html">Contact Us</a></li>
 	</div>
 		
