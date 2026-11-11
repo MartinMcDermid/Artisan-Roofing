@@ -33,6 +33,12 @@ function line($name) {
   return str_replace(["\r", "\n"], ' ', input($name));
 }
 
+// Character length; invalid UTF-8 counts as too long so it is rejected.
+// (iconv + pcre are in the stock PHP build; mbstring is not installed.)
+function length($s) {
+  return preg_match('//u', $s) ? iconv_strlen($s, 'UTF-8') : PHP_INT_MAX;
+}
+
 // Records this send and reports whether the IP is still under the limit.
 // State lives in PHP-FPM's private temp dir, keyed by a hash of the IP.
 function within_rate_limit($ip) {
@@ -82,8 +88,8 @@ $Message = input('Message');
 $valid = $Name !== '' && $Message !== ''
   && filter_var($Email, FILTER_VALIDATE_EMAIL)
   && strlen($Email) <= MAX_EMAIL
-  && mb_strlen($Message) <= MAX_MESSAGE
-  && max(array_map('mb_strlen', [$Name, $City, $Tel, $Fax])) <= MAX_FIELD;
+  && length($Message) <= MAX_MESSAGE
+  && max(array_map('length', [$Name, $City, $Tel, $Fax])) <= MAX_FIELD;
 
 if (!$valid) {
   redirect('error.htm');
