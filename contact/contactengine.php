@@ -3,49 +3,46 @@
 $EmailFrom = "info@artiroof.co.uk";
 $EmailTo = "cpo@artiroof.co.uk";
 $Subject = "Contact form on artiroof.co.uk";
-$Name = Trim(stripslashes($_POST['Name']));
-$City = Trim(stripslashes($_POST['City']));
-$Tel = Trim(stripslashes($_POST['Tel'])); 
-$Fax = Trim(stripslashes($_POST['Fax']));
-$Email = Trim(stripslashes($_POST['Email'])); 
-$Message = Trim(stripslashes($_POST['Message'])); 
 
-// validation
-$validationOK=true;
-if (!$validationOK) {
-  print "<meta http-equiv=\"refresh\" content=\"0;URL=error.htm\">";
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  header('Location: index.html');
   exit;
 }
 
-// prepare email body text
-$Body = "";
-$Body .= "Name: ";
-$Body .= $Name;
-$Body .= "\n";
-$Body .= "City: ";
-$Body .= $City;
-$Body .= "\n";
-$Body .= "Tel: ";
-$Body .= $Tel;
-$Body .= "\n";
-$Body .= "Fax: ";
-$Body .= $Fax;
-$Body .= "\n";
-$Body .= "Email: ";
-$Body .= $Email;
-$Body .= "\n";
-$Body .= "Message: ";
-$Body .= $Message;
-$Body .= "\n";
-
-// send email 
-$success = mail($EmailTo, $Subject, $Body, "From: <$EmailFrom>");
-
-// redirect to success page 
-if ($success){
-  print "<meta http-equiv=\"refresh\" content=\"0;URL=contactthanks.php\">";
+function field($name) {
+  // Strip CR/LF so nothing can be smuggled into the mail headers.
+  return trim(str_replace(["\r", "\n"], ' ', $_POST[$name] ?? ''));
 }
-else{
-  print "<meta http-equiv=\"refresh\" content=\"0;URL=error.htm\">";
+
+$Name = field('Name');
+$City = field('City');
+$Tel = field('Tel');
+$Fax = field('Fax');
+$Email = field('Email');
+$Message = trim($_POST['Message'] ?? '');
+
+// Honeypot: real visitors never see or fill the "website" field.
+if (($_POST['website'] ?? '') !== '') {
+  header('Location: contactthanks.php');
+  exit;
 }
-?>
+
+if ($Name === '' || $Message === '' || !filter_var($Email, FILTER_VALIDATE_EMAIL)) {
+  header('Location: error.htm');
+  exit;
+}
+
+$Body = "Name: $Name\n"
+      . "City: $City\n"
+      . "Tel: $Tel\n"
+      . "Fax: $Fax\n"
+      . "Email: $Email\n"
+      . "Message: $Message\n";
+
+$headers = "From: Artisan Roofing website <$EmailFrom>\r\n"
+         . "Reply-To: $Email\r\n"
+         . "Content-Type: text/plain; charset=UTF-8";
+
+$success = mail($EmailTo, $Subject, $Body, $headers, "-f$EmailFrom");
+
+header('Location: ' . ($success ? 'contactthanks.php' : 'error.htm'));
