@@ -40,7 +40,7 @@ function length($s) {
 }
 
 // Records this send and reports whether the IP is still under the limit.
-// State lives in PHP-FPM's private temp dir, keyed by a hash of the IP.
+// State lives in the system temp dir (/tmp, cleared on reboot), keyed by a hash of the IP.
 function within_rate_limit($ip) {
   $file = sys_get_temp_dir() . '/artiroof-contact-rate.json';
   $fh = fopen($file, 'c+');
