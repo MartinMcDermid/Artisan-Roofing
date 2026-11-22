@@ -45,7 +45,7 @@ jobs:
 
       - name: Smoke test
         run: |
-          for path in / /contact/index.html /zinc.html; do
+          for path in / /contact/index.html /zinc.html /privacy /files/artisan-roofing-privacy-notice-2026.pdf; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "https://www.artiroof.co.uk${path}")
             echo "${code} ${path}"
             [ "$code" = 200 ]
